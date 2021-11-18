@@ -88,9 +88,21 @@ finalPairs (x:xs) = last (adjacentPairsInSentence x) : finalPairs xs
 pairsCount :: Pairs -> PairsTally
 pairsCount = undefined  -- remove "undefined" and write your function here
 
+-----
 
+{- neighbours xs s
+Gives all the words that appear with a certain word and their tallies.
+
+RETURNS: WordTally of all words that are in a pair with s and the tally of the pair.
+EXAMPLES:
+  neighbours [(("bear","big"),2),(("big","dog"),1)] "big" == [("bear",2),("dog",1)]
+  neighbours [(("bear","big"),1)] "other" == []
+  neighbours [] "other" == []
+-}
 neighbours :: PairsTally -> String -> WordTally
-neighbours = undefined  -- remove "undefined" and write your function here
+neighbours xs s = [if a==s then (b,c) else (a,c) | ((a,b),c)<-xs, a==s || b==s]
+
+-----
 
 mostCommonNeighbour :: PairsTally -> String -> Maybe String
 mostCommonNeighbour = undefined  -- remove "undefined" and write your function here
