@@ -5,6 +5,7 @@ module CompLing(wordCount, adjacentPairs, pairsCount, neighbours, mostCommonNeig
 import Test.HUnit -- provides testing framework
 import PandP      -- provide sample text to play with (variable austin)
 import Data.List
+import TcRnMonad (initTcRnIf)
 
 -- DO NOT CHANGE THESE TYPES
 type Sentence = [String]
@@ -24,8 +25,8 @@ EXAMPLES:
     [("a",3),("rose",3),("is",2),("but",1),("so",1)]
 -}
 wordCount :: Document -> WordTally
-wordCount xs = nub [(x, length $ filter (==x) cxs) | x<-cxs]
-  where cxs = concat xs
+wordCount xs = nub [(x, length $ filter (==x) concatList) | x<-concatList]
+  where concatList = concat xs
 
 -----
 {- adjacentPairs xs
@@ -51,7 +52,6 @@ EXAMPLES:
 -}
 adjacentPairsInSentence :: Sentence -> Pairs
 
---VARIANT: length sent
 adjacentPairsInSentence [] = []
 adjacentPairsInSentence [x] = []
 adjacentPairsInSentence (x:y:xs) = (x,y) : adjacentPairsInSentence (y:xs)
@@ -69,21 +69,21 @@ EXAMPLES:
 -}
 initialPairs :: Document -> Pairs
 initialPairs [] = []
-initialPairs [x] = []
-initialPairs (x:xs) = head (adjacentPairsInSentence x) : initialPairs xs
+initialPairs (x:xs) = if null sentencePairs then [] else head sentencePairs : initialPairs xs
+  where sentencePairs = adjacentPairsInSentence x
 
 {- finalPairs doc
 Computes the pair of the last two words of each sentence in a document.
 
 RETURNS: Pairs of the last two words of all sentences in doc.
 EXAMPLES:
-  finalPairs [["time", "for", "a", "break"], ["not", "yet"]] == [("a", "break"),("not", "yet")]
+  finalPairs [["time", "for", "a", "break"], ["not", "yet"], ["hello"]] == [("a", "break"),("not", "yet")]
   finalPairs [["a"]] == []
 -}
 finalPairs :: Document -> Pairs
 finalPairs [] = []
-finalPairs [x] = []
-finalPairs (x:xs) = last (adjacentPairsInSentence x) : finalPairs xs
+finalPairs (x:xs) = if null sentencePairs then [] else last sentencePairs : finalPairs xs
+  where sentencePairs = adjacentPairsInSentence x
 
 -----
 {- pairsCount xs
@@ -93,8 +93,8 @@ Examples:
   pairsCount [("big","bear"),("bear","big"),("big","dog")] == [(("bear","big"),2),(("big","dog"),1)]
 -}
 pairsCount :: Pairs -> PairsTally
-pairsCount xs = nub [(x, length $ filter (==x) sxs) | x<-sxs]
-  where sxs = map sortInTuple xs
+pairsCount xs = nub [(x, length $ filter (==x) sortedList) | x<-sortedList]
+  where sortedList = map sortInTuple xs
 
 {- sortInTuple (a,b)
 Orders a pair of strings in alphabetical order
@@ -120,10 +120,10 @@ EXAMPLES:
   neighbours [] "other" == []
 -}
 neighbours :: PairsTally -> String -> WordTally
-neighbours xs s = [if a==s 
-                    then (b,c) 
-                    else (a,c) 
-                  | ((a,b),c)<-xs, a==s || b==s]
+neighbours xs word = [if a==word
+                    then (b,c)
+                    else (a,c)
+                  | ((a,b),c)<-xs, a==word || b==word]
 
 -----
 
@@ -138,9 +138,9 @@ EXAMPLES:
 -}
 
 mostCommonNeighbour :: PairsTally -> String -> Maybe String
-mostCommonNeighbour xs s
-  | null $ neighbours xs s = Nothing
-  | otherwise = Just $ fst (maximumBy (\(_,a) (_,b) -> compare a b) (neighbours xs s))
+mostCommonNeighbour xs word
+  | null $ neighbours xs word = Nothing
+  | otherwise = Just $ fst (maximumBy (\(_,a) (_,b) -> compare a b) (neighbours xs word))
 
 
 
