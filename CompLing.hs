@@ -14,24 +14,25 @@ type Pairs = [(String, String)]
 type PairsTally = [((String, String), Int)]
 
 -- DO NOT CHANGE THE TYPE SIGNATURES FOR THESE FUNCTIONS
-{- wordCount xs
+
+{- wordCount doc
 Computes a tally of all the distinct words appearing in the document.
 
-RETURNS: List of WordTallys, one for each unique word in xs, with the tally of the word.
+RETURNS: List of WordTallys, one for each unique word in doc, with the number of occurrences of the word.
 EXAMPLES:
   wordCount [["a","b","c","a","b","a"],["d","e"]] == [("a",3),("b",2),("c",1),("d",1),("e",1)]
   wordCount [["a", "rose", "is", "a", "rose"],["but", "so", "is", "a", "rose"]] == 
     [("a",3),("rose",3),("is",2),("but",1),("so",1)]
 -}
 wordCount :: Document -> WordTally
-wordCount xs = nub [(x, length $ filter (==x) concatList) | x<-concatList]
-  where concatList = concat xs
+wordCount doc = nub [(x, length $ filter (==x) concatenatedList) | x<-concatenatedList]
+  where concatenatedList = concat doc
 
 -----
-{- adjacentPairs xs
+{- adjacentPairs doc
 Computes all the pairs in each sentence in the document.
 
-RETURNS: Pairs containing all pairs in each sentence in xs.
+RETURNS: Pairs containing all pairs in each sentence in doc.
 EXAMPLES: 
   adjacentPairs [["time", "for", "a", "break"], ["not", "for", "a", "while"]]
     == [("time","for"),("for","a"),("a","break"),("not","for"),("for","a"),("a","while")]
@@ -50,7 +51,7 @@ EXAMPLES:
   adjacentPairsInSentence ["a"] == []
 -}
 adjacentPairsInSentence :: Sentence -> Pairs
-
+-- VARIANT: length sent
 adjacentPairsInSentence [] = []
 adjacentPairsInSentence [x] = []
 adjacentPairsInSentence (x:y:xs) = (x,y) : adjacentPairsInSentence (y:xs)
@@ -68,7 +69,7 @@ EXAMPLES:
 -}
 initialPairs :: Document -> Pairs
 initialPairs [] = []
-initialPairs (x:xs) = if null sentencePairs then [] else head sentencePairs : initialPairs xs
+initialPairs (x:xs) = if null sentencePairs then initialPairs xs else head sentencePairs : initialPairs xs
   where sentencePairs = adjacentPairsInSentence x
 
 {- finalPairs doc
@@ -81,19 +82,19 @@ EXAMPLES:
 -}
 finalPairs :: Document -> Pairs
 finalPairs [] = []
-finalPairs (x:xs) = if null sentencePairs then [] else last sentencePairs : finalPairs xs
+finalPairs (x:xs) = if null sentencePairs then finalPairs xs else last sentencePairs : finalPairs xs
   where sentencePairs = adjacentPairsInSentence x
 
 -----
-{- pairsCount xs
+{- pairsCount pairList
 Computes a tally of all pairs, such as those computed by adjacentPairs.
-RETURNS: A list with pairs and their number of occurances as elements.
+RETURNS: A list with pairs and their number of occurences as elements.
 Examples:
   pairsCount [("big","bear"),("bear","big"),("big","dog")] == [(("bear","big"),2),(("big","dog"),1)]
 -}
 pairsCount :: Pairs -> PairsTally
-pairsCount xs = nub [(x, length $ filter (==x) sortedList) | x<-sortedList]
-  where sortedList = map sortInTuple xs
+pairsCount pairList = nub [(x, length $ filter (==x) sortedPairs) | x<-sortedPairs]
+  where sortedPairs = map sortInTuple pairList
 
 {- sortInTuple (a,b)
 Orders a pair of strings in alphabetical order
@@ -109,27 +110,27 @@ sortInTuple (a,b)
 
 -----
 
-{- neighbours xs s
-Computes all the words that appear next to a certain word, and the number of times they appear.
+{- neighbours pairsTallyList word
+Computes all the words that appear next to a certain word, and their number of occurences together, regardless of the order of the pair.
 
-RETURNS: WordTally of all words that are in a pair with s in xs and the tally of the given pair.
+RETURNS: WordTally of all strings that are in a pair with word in pairsTallyList and the tally of the given pair.
 EXAMPLES:
   neighbours [(("bear","big"),2),(("big","dog"),1)] "big" == [("bear",2),("dog",1)]
   neighbours [(("bear","big"),1)] "other" == []
   neighbours [] "other" == []
 -}
 neighbours :: PairsTally -> String -> WordTally
-neighbours xs word = [if a==word
-                    then (b,c)
-                    else (a,c)
-                  | ((a,b),c)<-xs, a==word || b==word]
+neighbours pairsTallyList word = [if a==word
+                        then (b,c)
+                        else (a,c) 
+                      | ((a,b),c)<-pairsTallyList, a==word || b==word]
 
 -----
 
-{-mostCommonNeighbour xs s
-Computes the word that occurs next to a certain word the most.
+{-mostCommonNeighbour pairsTallyList word
+Computes the word that occurs next to a certain word the most, regardless of the order of the pair.
 
-RETURNS: Nothing if s is not in any of the pairs in xs, or Just the most common word to occur in a pair with s.
+RETURNS: Nothing if word is not in any of the pairs in pairsTallyList, or Just the most common string to occur in a pair with word.
 EXAMPLES: 
   mostCommonNeighbour [(("bear","big"),2),(("big","dog"),1)] "big" == Just "bear"
   mostCommonNeighbour [(("bear","big"),1)] "other" == Nothing
@@ -137,11 +138,20 @@ EXAMPLES:
 -}
 
 mostCommonNeighbour :: PairsTally -> String -> Maybe String
-mostCommonNeighbour xs word
-  | null $ neighbours xs word = Nothing
-  | otherwise = Just $ fst (maximumBy (\(_,a) (_,b) -> compare a b) (neighbours xs word))
+mostCommonNeighbour pairsTallyList word
+  | null $ neighbours pairsTallyList word = Nothing
+  | otherwise = Just $ fst (maximumBySecondElement (neighbours pairsTallyList word))
 
+{- maximumBySecondElement wordTallyList
+Computes the tuple with the largest second element.
 
+  PRE: wordTallyList not empty
+  RETURNS: The tuple in wordTallyList with the largest second element.
+  EXAMPLES:
+    maximumBySecondElement [("a",-1),("b",2),("b",3)] == ("b",3)
+-}
+maximumBySecondElement :: WordTally ->  (String,Int)
+maximumBySecondElement xs = (maximumBy (\(_,a) (_,b) -> compare a b)) xs
 
 -- Test Cases
 -- feel free to add other test cases here. an independent set of
