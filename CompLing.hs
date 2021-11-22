@@ -5,7 +5,6 @@ module CompLing(wordCount, adjacentPairs, pairsCount, neighbours, mostCommonNeig
 import Test.HUnit -- provides testing framework
 import PandP      -- provide sample text to play with (variable austin)
 import Data.List
-import TcRnMonad (initTcRnIf)
 
 -- DO NOT CHANGE THESE TYPES
 type Sentence = [String]
