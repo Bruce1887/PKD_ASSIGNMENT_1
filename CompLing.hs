@@ -21,19 +21,18 @@ Computes a tally of all the distinct words appearing in the document.
 RETURNS: List of WordTallys, one for each unique word in doc, with the number of occurrences of the word.
 EXAMPLES:
   wordCount [["a","b","c","a","b","a"],["d","e"]] == [("a",3),("b",2),("c",1),("d",1),("e",1)]
-  wordCount [["a", "rose", "is", "a", "rose"],["but", "so", "is", "a", "rose"]] == 
+  wordCount [["a", "rose", "is", "a", "rose"],["but", "so", "is", "a", "rose"]] ==
     [("a",3),("rose",3),("is",2),("but",1),("so",1)]
 -}
 wordCount :: Document -> WordTally
 wordCount doc = nub [(x, length $ filter (==x) concatenatedList) | x<-concatenatedList]
   where concatenatedList = concat doc
 
------
 {- adjacentPairs doc
 Computes all the pairs in each sentence in the document.
 
 RETURNS: Pairs containing all pairs in each sentence in doc.
-EXAMPLES: 
+EXAMPLES:
   adjacentPairs [["time", "for", "a", "break"], ["not", "for", "a", "while"]]
     == [("time","for"),("for","a"),("a","break"),("not","for"),("for","a"),("a","while")]
   adjacentPairs [["a"],["b"]] == []
@@ -51,26 +50,24 @@ EXAMPLES:
   adjacentPairsInSentence ["a"] == []
 -}
 adjacentPairsInSentence :: Sentence -> Pairs
--- VARIANT: length sent
 adjacentPairsInSentence [] = []
 adjacentPairsInSentence [x] = []
 adjacentPairsInSentence (x:y:xs) = (x,y) : adjacentPairsInSentence (y:xs)
-
------
 
 {- initialPairs doc
 Computes the pair of the first two words of each sentence in a document.
 
 RETURNS: Pairs of the first two words of all sentences in doc.
 EXAMPLES:
-  initialPairs [["time", "for", "a", "break"], ["not", "yet"]]
-== [("time","for"),("not", "yet")]
+  initialPairs [["time", "for", "a", "break"], ["not", "yet"]] == [("time","for"),("not", "yet")]
   initialPairs [["a"]] == []
 -}
 initialPairs :: Document -> Pairs
 initialPairs [] = []
-initialPairs (x:xs) = if null sentencePairs then initialPairs xs else head sentencePairs : initialPairs xs
-  where sentencePairs = adjacentPairsInSentence x
+initialPairs (x:xs) = if null sentencePairs
+                        then initialPairs xs
+                        else head sentencePairs : initialPairs xs
+                        where sentencePairs = adjacentPairsInSentence x
 
 {- finalPairs doc
 Computes the pair of the last two words of each sentence in a document.
@@ -82,10 +79,11 @@ EXAMPLES:
 -}
 finalPairs :: Document -> Pairs
 finalPairs [] = []
-finalPairs (x:xs) = if null sentencePairs then finalPairs xs else last sentencePairs : finalPairs xs
-  where sentencePairs = adjacentPairsInSentence x
+finalPairs (x:xs) = if null sentencePairs
+                      then finalPairs xs
+                      else last sentencePairs : finalPairs xs
+                      where sentencePairs = adjacentPairsInSentence x
 
------
 {- pairsCount pairList
 Computes a tally of all pairs, such as those computed by adjacentPairs.
 RETURNS: A list with pairs and their number of occurences as elements.
@@ -108,8 +106,6 @@ sortInTuple (a,b)
   | a < b = (a,b)
   | otherwise = (b,a)
 
------
-
 {- neighbours pairsTallyList word
 Computes all the words that appear next to a certain word, and their number of occurences together, regardless of the order of the pair.
 
@@ -121,17 +117,15 @@ EXAMPLES:
 -}
 neighbours :: PairsTally -> String -> WordTally
 neighbours pairsTallyList word = [if a==word
-                        then (b,c)
-                        else (a,c) 
-                      | ((a,b),c)<-pairsTallyList, a==word || b==word]
-
------
+                                    then (b,c)
+                                    else (a,c)
+                                  | ((a,b),c)<-pairsTallyList, a==word || b==word]
 
 {-mostCommonNeighbour pairsTallyList word
 Computes the word that occurs next to a certain word the most, regardless of the order of the pair.
 
 RETURNS: Nothing if word is not in any of the pairs in pairsTallyList, or Just the most common string to occur in a pair with word.
-EXAMPLES: 
+EXAMPLES:
   mostCommonNeighbour [(("bear","big"),2),(("big","dog"),1)] "big" == Just "bear"
   mostCommonNeighbour [(("bear","big"),1)] "other" == Nothing
   mostCommonNeighbour [] "other" == Nothing
@@ -198,7 +192,3 @@ test10 = TestCase $ assertEqual "mostCommonNeighbour of \"bennet\""
 
 -- for running all the tests (type "runtests" within ghci --- without the quotes)
 runtests = runTestTT $ TestList [test1, test2, test3, test3a, test3b, test4, test5, test6, test7,test8,test9,test10]
-
-
-
-
